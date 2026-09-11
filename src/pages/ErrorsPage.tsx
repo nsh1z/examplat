@@ -6,17 +6,23 @@ import {
   CheckCircle2,
   Calendar,
   FileText,
-  RotateCcw
+  RotateCcw,
+  Trash2,
+  X,
+  AlertTriangle
 } from 'lucide-react';
-import { fetchErrors } from '../api';
+import { fetchErrors, resetErrors } from '../api';
 import MathText from '../components/MathText';
 
 interface ErrorsPageProps {
   onNavigateToPractice: (topicId?: string) => void;
+  onRefreshDashboard?: () => void;
 }
 
-export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) => {
+export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice, onRefreshDashboard }) => {
   const [loading, setLoading] = useState<boolean>(true);
+  const [resetting, setResetting] = useState<boolean>(false);
+  const [showResetModal, setShowResetModal] = useState<boolean>(false);
   const [errorData, setErrorData] = useState<{
     weak_concepts: Array<{
       concept_id: string;
@@ -67,6 +73,21 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
     loadData();
   }, []);
 
+  const handleReset = async (mode: 'errors' | 'all') => {
+    try {
+      setResetting(true);
+      await resetErrors(mode);
+      await loadData();
+      if (onRefreshDashboard) onRefreshDashboard();
+      setShowResetModal(false);
+    } catch (err) {
+      console.error('Error resetting errors:', err);
+      alert('Ocurrió un error al resetear los errores.');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const weakConcepts = errorData?.weak_concepts || [];
   const recentFailures = errorData?.recent_failures || [];
 
@@ -85,15 +106,28 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
             </p>
           </div>
 
-          {weakConcepts.length > 0 && (
-            <button
-              onClick={() => onNavigateToPractice()}
-              className="inline-flex items-center space-x-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-rose-700 flex-shrink-0"
-            >
-              <BrainCircuit className="h-4 w-4" />
-              <span>Practicar Todo lo Débil</span>
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+            {weakConcepts.length > 0 && (
+              <button
+                onClick={() => onNavigateToPractice()}
+                className="inline-flex items-center space-x-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-rose-700 min-h-[40px]"
+              >
+                <BrainCircuit className="h-4 w-4" />
+                <span>Practicar Todo lo Débil</span>
+              </button>
+            )}
+
+            {(weakConcepts.length > 0 || recentFailures.length > 0) && (
+              <button
+                onClick={() => setShowResetModal(true)}
+                className="inline-flex items-center space-x-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 min-h-[40px] transition-colors"
+                title="Resetear historial de errores"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>Resetear Errores</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -207,6 +241,82 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Reseteo */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-navy-900 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center space-x-2 text-rose-600 font-black text-base">
+                <AlertTriangle className="h-5 w-5" />
+                <span>Resetear Historial de Errores</span>
+              </div>
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Seleccioná cómo deseás restablecer tu registro de práctica:
+            </p>
+
+            <div className="space-y-3">
+              {/* Opción 1: Solo Errores */}
+              <button
+                disabled={resetting}
+                onClick={() => handleReset('errors')}
+                className="w-full text-left p-4 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100/70 dark:border-rose-900/60 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-sm text-rose-900 dark:text-rose-200 flex items-center space-x-2">
+                    <RotateCcw className="h-4 w-4 text-rose-600" />
+                    <span>Limpiar solo fallos y errores</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-200/60 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200 px-2 py-0.5 rounded-full">
+                    Recomendado
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 pl-6">
+                  Elimina los intentos incorrectos y desmarca los conceptos débiles para limpiar la vista. Mantiene tu XP acumulada y respuestas acertadas.
+                </p>
+              </button>
+
+              {/* Opción 2: Reset Completo */}
+              <button
+                disabled={resetting}
+                onClick={() => {
+                  if (confirm('¿Confirmás que querés borrar TODO tu progreso (XP, historial de simulacros y prácticas)?')) {
+                    handleReset('all');
+                  }
+                }}
+                className="w-full text-left p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:bg-slate-800 transition-all"
+              >
+                <div className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center space-x-2">
+                  <Trash2 className="h-4 w-4 text-slate-500" />
+                  <span>Reiniciar todo a cero</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 pl-6">
+                  Borra todos los intentos, sesiones de examen y resetea tu nivel y XP a 0.
+                </p>
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                disabled={resetting}
+                onClick={() => setShowResetModal(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

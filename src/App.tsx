@@ -126,6 +126,7 @@ export const App: React.FC = () => {
           {currentTab === 'errors' && (
             <ErrorsPage
               onNavigateToPractice={(topicId) => handleNavigate('practice', { topicId })}
+              onRefreshDashboard={loadDashboard}
             />
           )}
 

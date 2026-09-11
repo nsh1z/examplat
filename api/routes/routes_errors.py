@@ -111,3 +111,41 @@ def get_errors(user_id: str = "default_user"):
             "weak_concepts": errors_list,
             "recent_failures": recent_failures
         }
+
+from pydantic import BaseModel
+
+class ResetErrorsRequest(BaseModel):
+    user_id: str = "default_user"
+    mode: str = "errors"  # "errors" (limpiar fallos y débiles) o "all" (reiniciar todo a cero)
+
+@router.post("/reset")
+def reset_errors(req: ResetErrorsRequest):
+    with get_db() as conn:
+        cursor = conn.cursor()
+
+        if req.mode == "all":
+            cursor.execute("DELETE FROM question_attempts WHERE user_id = ?;", (req.user_id,))
+            cursor.execute("DELETE FROM exam_sessions WHERE user_id = ?;", (req.user_id,))
+            cursor.execute("DELETE FROM concept_progress WHERE user_id = ?;", (req.user_id,))
+            cursor.execute("""
+            UPDATE users SET
+                xp = 0,
+                level = 1,
+                streak_days = 1,
+                study_time_seconds = 0
+            WHERE id = ?;
+            """, (req.user_id,))
+            message = "Se reinició todo el progreso, historial y estadísticas a cero."
+        else:
+            cursor.execute("DELETE FROM question_attempts WHERE user_id = ? AND is_correct = 0;", (req.user_id,))
+            cursor.execute("""
+            UPDATE concept_progress
+            SET incorrect_count = 0,
+                needs_practice_flag = 0,
+                status = CASE WHEN correct_count > 0 THEN 'dominado' ELSE 'no_estudiado' END,
+                mastery = CASE WHEN correct_count > 0 THEN 100.0 ELSE 0.0 END
+            WHERE user_id = ?;
+            """, (req.user_id,))
+            message = "Se limpiaron todos los errores e intentos fallidos correctamente."
+
+        return {"status": "ok", "mode": req.mode, "message": message}

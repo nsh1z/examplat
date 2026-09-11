@@ -141,6 +141,16 @@ export async function fetchErrors(userId = 'default_user') {
   return res.json();
 }
 
+export async function resetErrors(mode: 'errors' | 'all' = 'errors', userId = 'default_user') {
+  const res = await fetch(`${API_BASE}/errors/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, mode })
+  });
+  if (!res.ok) throw new Error('Error al resetear errores');
+  return res.json();
+}
+
 export async function searchKnowledge(query: string) {
   const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
   return res.json();
