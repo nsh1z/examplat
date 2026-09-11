@@ -73,7 +73,11 @@ export async function submitQuestionAnswer(data: {
       attempt_type: data.attemptType || 'practice'
     })
   });
-  if (!res.ok) throw new Error('Error al enviar respuesta');
+  if (!res.ok) {
+    const errorBody = await res.text().catch(() => '');
+    console.error('Error in /practice/submit:', res.status, errorBody);
+    throw new Error(`Error al enviar respuesta (${res.status}): ${errorBody || res.statusText}`);
+  }
   return res.json();
 }
 

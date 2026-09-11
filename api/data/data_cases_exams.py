@@ -130,8 +130,8 @@ EXAM_BANK_EXTRA_QUESTIONS = [
     },
     {
         "id": "q_exam_2",
-        "topic_id": "u2_t6",
-        "concept_id": "c_disyuncion_completitud",
+        "topic_id": "u3_t4",
+        "concept_id": "c_disyuncion_solapamiento",
         "type": "multiple_choice",
         "difficulty": "medio",
         "question": "¿Cuál es la diferencia fundamental entre una restricción de Disyunción (d) y una de Solapamiento (o) en el Modelo Entidad-Relación Extendido (EER)?",
@@ -151,7 +151,7 @@ EXAM_BANK_EXTRA_QUESTIONS = [
     },
     {
         "id": "q_exam_3",
-        "topic_id": "u3_t4",
+        "topic_id": "u4_t4",
         "concept_id": "c_teoria_claves",
         "type": "multiple_choice",
         "difficulty": "medio",
@@ -172,8 +172,8 @@ EXAM_BANK_EXTRA_QUESTIONS = [
     },
     {
         "id": "q_exam_4",
-        "topic_id": "u5_t3",
-        "concept_id": "c_mapeo_opcion_b",
+        "topic_id": "u6_t6",
+        "concept_id": "c_mapeo_jerarquias_opciones",
         "type": "multiple_choice",
         "difficulty": "dificil",
         "question": "En el mapeo de jerarquías EER al modelo relacional, ¿cuál es la precondición OBLIGATORIA para poder aplicar la Opción B (tablas exclusivas para las subclases, eliminando la superclase)?",
@@ -193,7 +193,7 @@ EXAM_BANK_EXTRA_QUESTIONS = [
     },
     {
         "id": "q_exam_5",
-        "topic_id": "u3_t5",
+        "topic_id": "u4_t5",
         "concept_id": "c_semantica_null",
         "type": "true_false",
         "difficulty": "facil",
@@ -212,8 +212,8 @@ EXAM_BANK_EXTRA_QUESTIONS = [
     },
     {
         "id": "q_exam_6",
-        "topic_id": "u2_t1",
-        "concept_id": "c_reglas_gramatica_der",
+        "topic_id": "u2_t4",
+        "concept_id": "c_reglas_construccion_der",
         "type": "true_false",
         "difficulty": "facil",
         "question": "En las reglas de construcción formal de un Diagrama Entidad-Relación (DER), es válido conectar una relación directamente a otra relación con una línea.",

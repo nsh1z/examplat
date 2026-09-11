@@ -21,11 +21,15 @@ else:
     DB_PATH = BASE_DIR / "plataforma.db"
 
 def get_connection():
-    # Fallback if in Vercel and file was not yet copied
-    if (os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")) and not DB_PATH.exists():
+    # Fallback and auto-sync if in Vercel and source DB is updated
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
         src_db = BASE_DIR / "plataforma.db"
         if src_db.exists():
-            shutil.copy2(src_db, DB_PATH)
+            try:
+                if not DB_PATH.exists() or src_db.stat().st_size != DB_PATH.stat().st_size or src_db.stat().st_mtime > DB_PATH.stat().st_mtime:
+                    shutil.copy2(src_db, DB_PATH)
+            except Exception as e:
+                print(f"Error syncing DB to /tmp: {e}")
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")

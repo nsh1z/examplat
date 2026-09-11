@@ -73,6 +73,8 @@ def get_errors(user_id: str = "default_user"):
                 "common_confusions": r["common_confusions"],
                 "definition": r["definition"],
                 "simple_explanation": r["simple_explanation"],
+                "source_document": r["source_document"],
+                "source_page": r["source_page"],
                 "source": f"{r['source_document']} — {r['source_page']}",
                 "mastery": round(r["mastery"] or 0.0, 1),
                 "status": r["status"],
@@ -81,4 +83,31 @@ def get_errors(user_id: str = "default_user"):
                 "recent_failed_attempts": recent_fails
             })
 
-        return errors_list
+        # 2. Fetch overall recent failed attempts for user history
+        cursor.execute("""
+        SELECT qa.id, qa.question_id, q.question as question_text, qa.user_answer,
+               c.name as concept_name, qa.score, qa.created_at as timestamp, q.explanation
+        FROM question_attempts qa
+        JOIN questions q ON qa.question_id = q.id
+        JOIN concepts c ON qa.concept_id = c.id
+        WHERE qa.user_id = ? AND qa.is_correct = 0
+        ORDER BY qa.created_at DESC
+        LIMIT 20;
+        """, (user_id,))
+        recent_failures = []
+        for f in cursor.fetchall():
+            recent_failures.append({
+                "id": str(f["id"]),
+                "question_id": f["question_id"],
+                "question_text": f["question_text"],
+                "user_answer": f["user_answer"],
+                "concept_name": f["concept_name"],
+                "score": f["score"],
+                "timestamp": f["timestamp"],
+                "explanation": f["explanation"] or ""
+            })
+
+        return {
+            "weak_concepts": errors_list,
+            "recent_failures": recent_failures
+        }

@@ -48,7 +48,14 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
     try {
       setLoading(true);
       const data = await fetchErrors();
-      setErrorData(data);
+      if (Array.isArray(data)) {
+        setErrorData({ weak_concepts: data, recent_failures: [] });
+      } else if (data && typeof data === 'object') {
+        setErrorData({
+          weak_concepts: Array.isArray(data.weak_concepts) ? data.weak_concepts : [],
+          recent_failures: Array.isArray(data.recent_failures) ? data.recent_failures : []
+        });
+      }
     } catch (err) {
       console.error('Error fetching errors', err);
     } finally {
@@ -59,6 +66,9 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
   useEffect(() => {
     loadData();
   }, []);
+
+  const weakConcepts = errorData?.weak_concepts || [];
+  const recentFailures = errorData?.recent_failures || [];
 
   return (
     <div className="space-y-6 pb-16">
@@ -75,7 +85,7 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
             </p>
           </div>
 
-          {errorData.weak_concepts.length > 0 && (
+          {weakConcepts.length > 0 && (
             <button
               onClick={() => onNavigateToPractice()}
               className="inline-flex items-center space-x-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-rose-700 flex-shrink-0"
@@ -91,7 +101,7 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
         <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-navy-900">
           <div className="text-slate-400 text-sm">Cargando registro de errores...</div>
         </div>
-      ) : errorData.weak_concepts.length === 0 && errorData.recent_failures.length === 0 ? (
+      ) : weakConcepts.length === 0 && recentFailures.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-navy-900 shadow-sm">
           <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -110,13 +120,13 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
       ) : (
         <div className="space-y-6">
           {/* Weak Concepts Grid */}
-          {errorData.weak_concepts.length > 0 && (
+          {weakConcepts.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 px-1">
-                Conceptos con Bajo Nivel de Dominio ({errorData.weak_concepts.length})
+                Conceptos con Bajo Nivel de Dominio ({weakConcepts.length})
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {errorData.weak_concepts.map((c) => (
+                {weakConcepts.map((c) => (
                   <div
                     key={c.concept_id}
                     className="rounded-2xl border border-rose-200 bg-white p-5 shadow-sm dark:border-rose-900/60 dark:bg-navy-900 flex flex-col justify-between"
@@ -156,13 +166,13 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ onNavigateToPractice }) 
           )}
 
           {/* Recent Failures History */}
-          {errorData.recent_failures.length > 0 && (
+          {recentFailures.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 px-1">
                 Historial de Intentos Fallidos Recientes
               </h3>
               <div className="space-y-3">
-                {errorData.recent_failures.map((f) => (
+                {recentFailures.map((f) => (
                   <div
                     key={f.id}
                     className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-navy-900 space-y-3"
